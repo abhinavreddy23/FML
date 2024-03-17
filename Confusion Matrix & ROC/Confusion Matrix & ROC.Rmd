@@ -1,0 +1,135 @@
+---
+title: "Confusion Matrix & ROC"
+author: "Abhinav Reddy"
+date: "2024-02-25"
+output: html_document
+---
+ + This below R code will load the necessary libraries, load the "Default" dataset, and displays summary of the dataset.
+
+```{r 1st}
+
+library(class)
+library(caret)
+library(ISLR)
+summary(Default)
+
+
+```
+
+
+
+ + This below code normalizes the "Default" dataset using the "range" method, creating a normalization model and applying it to the dataset to transform the variables to a specified range.
+```{r 2nd}
+
+normalize_mod <- preProcess(Default, method = c('range'))
+
+Def_normalize <- predict(normalize_mod, Default)
+
+```
+
+
+
+
+ + This below R code removes the second variable (student status) from the normalized "Default" dataset.
+```{r 3rd}
+
+Def_normalize <- Def_normalize[, -2]
+
+
+```
+
+
+
+
+
+ + This below R code splits the normalized dataset into training and testing sets, ensuring that 80% of the data is used for training and the remaining 20% for testing. This division facilitates model training and evaluation.
+```{r 4th}
+
+Index_Trn <- createDataPartition(Def_normalize$default, p = 0.8, list = FALSE)
+Train <- Def_normalize[Index_Trn, ]
+Test <- Def_normalize[-Index_Trn, ]
+
+```
+
+
+
+
+
+ + This below R code extracts predictor variables (2nd and 3rd columns) and labels (1st column) from both the training and testing datasets, preparing them for use in model training and evaluation.
+```{r 5th}
+
+Train_Predictor <- Train[,2:3]
+Test_Predictor <- Test[, 2:3]
+
+
+Train_lbls <- Train[, 1]
+Test_lbls <- Test[, 1]
+
+```
+
+
+
+
+
+ + This below R code uses the k-nearest neighbors (KNN) algorithm with k=4 to predict labels for the testing data based on the training data. The predicted labels are stored in Predicted_Test_lbls.
+```{r 6th}
+
+
+Predicted_Test_lbls <- knn(train = Train_Predictor,
+                             test = Test_Predictor,
+                             cl = Train_lbls,
+                             k = 4)
+
+```
+
+
+
+
+
+ + This function displays the first few values:
+```{r 7th}
+head(Predicted_Test_lbls)
+
+```
+
+
+
+
+
+
+ + This below R code generates a confusion matrix to evaluate the performance of the model by comparing predicted labels with actual labels.
+```{r 8th}
+library(caret)
+
+# Create confusion matrix
+confusion_matrix <- confusionMatrix(data = Predicted_Test_lbls, reference = Test_lbls)
+
+confusion_matrix
+
+```
+
+*** 
+ 
+# Plotting an ROC Curve
+
+This below R code loads the pROC library, computes predicted probabilities, generates an ROC curve with AUC value, plots it without confidence intervals, calculates and plots confidence intervals, and adds the best threshold to the plot.
+```{r 10th}
+
+library(pROC)
+
+roc <- plot.roc(as.numeric(Test$default),as.numeric(Predicted_Test_lbls),
+                                      
+                   main = "Confidence Intervals", 
+                   percent=TRUE,
+                   ci = TRUE,                  
+                   print.auc = TRUE)           
+ciobj <- ci.se(roc,                         
+               specificities = seq(0, 100, 5))
+plot(ciobj, type = "shape", col = "lightblue")     
+plot(ci(roc, of = "thresholds", thresholds = "best"))
+
+```
+
+***
+
+# Thank You !
